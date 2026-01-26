@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP国家查询</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2rem;
+        }
+
+        #status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .loading {
+            background-color: #e3f2fd;
+        }
+
+        .ready {
+            background-color: #e8f5e9;
+        }
+
+        .error {
+            background-color: #ffebee;
+        }
+
+        #queryBtn:disabled {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>IP国家查询工具</h1>
+    <div id="status" class="loading">正在初始化...</div>
+    <textarea id="ipInput" placeholder="输入IP，每行一个" rows="10" cols="50"></textarea><br>
+    <button id="queryBtn" onclick="handleQuery()" disabled>查询</button>
+    <div id="result"></div>
+
+    <script>
+        // ====== 全局状态 ======
+        let ipDatabase = [];
+        const Status = { LOADING: 0, READY: 1, ERROR: 2 };
+        let currentStatus = Status.LOADING;
+
+        // ====== 1. 异步加载数据库 (核心修复) ======
+        async function loadDatabase() {
+            const statusEl = document.getElementById('status');
+            try {
+                console.log('[DEBUG] 尝试从以下路径加载数据库: ', window.location.pathname);
+                // 使用相对路径，确保与 index.html 同目录
+                const dbUrl = './database.json';
+                console.log('[DEBUG] 构造的URL: ', dbUrl);
+
+                const response = await fetch(dbUrl);
+                console.log('[DEBUG] Fetch响应状态: ', response.status, response.ok);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: 服务器返回错误`);
+                }
+
+                const data = await response.json();
+                console.log('[DEBUG] JSON解析成功，元数据: ', data.meta);
+
+                if (!data.data || !Array.isArray(data.data)) {
+                    throw new Error('数据库格式错误：缺少 data 数组');
+                }
+
+                ipDatabase = data.data;
+                currentStatus = Status.READY;
+                statusEl.textContent = `✅ 数据库加载完成！共有 ${ipDatabase.length.toLocaleString()} 个IP区间。`;
+                statusEl.className = 'ready';
+                document.getElementById('queryBtn').disabled = false;
+
+                console.log(`[DEBUG] 成功加载 ${ipDatabase.length} 个区间`);
+
+            } catch (error) {
+                console.error('[DEBUG] 加载失败详情: ', error);
+                currentStatus = Status.ERROR;
+                statusEl.innerHTML = `
+                    ❌ 加载数据库失败！<br>
+                    <strong>原因:</strong> ${error.message}<br>
+                    <strong>请检查:</strong><br>
+                    1. 文件 <code>database.json</code> 是否与网页在同一文件夹？<br>
+                    2. 文件名是否完全一致（大小写敏感）？<br>
+                    <button onclick="window.location.reload()">点击重试</button>
+                `;
+                statusEl.className = 'error';
+            }
+        }
+
+        // ====== 2. 页面加载后立即开始加载数据库 ======
+        document.addEventListener('DOMContentLoaded', loadDatabase);
+
+        // ====== 3. 查询函数 ======
+        function ipToInt(ip) {
+            return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
+        }
+
+        function lookupCountry(ip) {
+            const target = ipToInt(ip);
+            let low = 0, high = ipDatabase.length - 1;
+            while (low <= high) {
+                const mid = Math.floor((low + high) / 2);
+                const [start, end, code] = ipDatabase[mid];
+                if (target >= start && target <= end) return code;
+                if (target < start) high = mid - 1;
+                else low = mid + 1;
+            }
+            return 'ZZ'; // 未找到也返回 ZZ
+        }
+
+        function handleQuery() {
+            if (currentStatus !== Status.READY) {
+                alert('数据库尚未就绪，请稍候。');
+                return;
+            }
+            const ips = document.getElementById('ipInput').value.trim().split('\n').filter(ip => ip);
+            const results = ips.map(ip => `${ip} => ${lookupCountry(ip)}`);
+            document.getElementById('result').innerHTML = `<pre>${results.join('\n')}</pre>`;
+        }
+    </script>
+</body>
+
+</html>
