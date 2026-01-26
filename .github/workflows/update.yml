@@ -1,4 +1,4 @@
-name: Update IP Database
+name: Update IP映射国家 Database
 on:
   schedule:
     - cron: '0 3 * * 1' # 每周一更新
