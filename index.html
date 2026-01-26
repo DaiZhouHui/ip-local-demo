@@ -117,7 +117,7 @@
 
         function handleQuery() {
             if (currentStatus !== Status.READY) {
-                alert('数据库尚未就绪，请稍候。');
+                console.log('数据库尚未就绪，请稍候。');
                 return;
             }
             const ips = document.getElementById('ipInput').value.trim().split('\n').filter(ip => ip);
