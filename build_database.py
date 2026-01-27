@@ -10,17 +10,16 @@ import csv, json, os, shutil, sys
 from urllib.request import urlopen
 from ipaddress import ip_network
 from datetime import datetime, timezone
-from pathlib import Path
-from dotenv import load_dotenv   # pip install python-dotenv
+MAXMIND_LICENSE_KEY = os.environ.get("MAXMIND_LICENSE_KEY", "")
 
-# 本地开发时加载 .env
-load_dotenv(".env", override=False)
-
-
-
-MAXMIND_LICENSE_KEY = os.getenv("MAXMIND_LICENSE_KEY")
+# 添加检查，如果密钥为空则报错
 if not MAXMIND_LICENSE_KEY:
-    raise RuntimeError("环境变量 MAXMIND_LICENSE_KEY 未设置")
+    print("❌ 错误：未找到MaxMind许可证密钥。")
+    print("   请设置 MAXMIND_LICENSE_KEY 环境变量。")
+    print("   本地测试：在.env文件中设置，或运行前执行 export MAXMIND_LICENSE_KEY=你的密钥")
+    print("   GitHub Actions：已在仓库Secrets中设置")
+    sys.exit(1)
+
 OUTPUT_JSON = "database.json"  # 固定文件名，与前端匹配
 TEMP_DIR = "temp_tiered_data"
 
