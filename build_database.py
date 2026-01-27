@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_database_three_tiers.py - 三级精度差异化构建器
+build_database.py - 三级精度差异化构建器
 层级1: 核心8国/地区 - 高精度 (温和合并)
 层级2: 次要10国 - 中等精度 (适度合并)
 层级3: 其余所有 - 低精度 (超级合并为‘ZZ’)

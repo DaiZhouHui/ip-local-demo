@@ -55,7 +55,7 @@ jobs:
           # 确保脚本使用环境变量中的密钥
           # 如果你的脚本需要从环境变量读取，请相应修改
           # 这里假设你的脚本已修改为从环境变量读取
-          python build_database_three_tiers.py
+          python build_database.py
           echo "数据库构建完成！"
           
           # 显示生成的文件信息
